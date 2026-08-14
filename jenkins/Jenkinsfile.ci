@@ -1,0 +1,52 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Validate Branch') {
+            steps {
+                script {
+                    if (env.BRANCH_NAME == 'main') {
+                        echo 'Skipping pipeline for main branch.'
+                        currentBuild.result = 'SUCCESS'
+                        return
+                    }
+                }
+            }
+        }
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh """
+                    if ! command -v docker >/dev/null 2>&1; then
+                        echo 'Docker CLI not found on this agent'
+                        exit 1
+                    fi
+                    docker build -t flask-ci:${env.BUILD_NUMBER} .
+                """
+            }
+        }
+
+        stage('Run Tests in Container') {
+            steps {
+                sh """
+                    docker run --rm flask-ci:${env.BUILD_NUMBER}
+                """
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'RESULT: Build and tests completed successfully.'
+        }
+        failure {
+            echo 'RESULT: Build or tests failed.'
+        }
+    }
+}
