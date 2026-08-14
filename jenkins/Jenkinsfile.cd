@@ -1,0 +1,75 @@
+pipeline {
+    agent any
+
+    environment {
+        AWS_REGION = 'ap-southeast-2'
+        AWS_ACCOUNT_ID = "962047682202"
+        ECR_REGISTRY = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+        ECR_REPOSITORY = 'my-docker-repo'
+        IMAGE_NAME = 'flask-cd'
+        IMAGE_TAG = "${BUILD_NUMBER}"
+    }
+
+    stages {
+        stage('Validate Branch') {
+            steps {
+                script {
+                    if (env.BRANCH_NAME != 'main') {
+                        echo "Current branch is '${env.BRANCH_NAME}'. Skipping CD pipeline."                    
+                        currentBuild.result = 'SUCCESS'
+                        return
+                    }
+                }
+            }
+        }
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    sh '''
+                        if ! command -v docker >/dev/null 2>&1; then
+                            echo 'Docker CLI not found on this agent'
+                            exit 1
+                        fi                    
+                        docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+                        docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}
+                    '''
+                }
+            }
+        }
+
+        stage('Run Tests in Container') {
+            steps {
+                sh """
+                    docker run --rm ${IMAGE_NAME}:${IMAGE_TAG}
+                """
+            }
+        }
+
+        stage('Push to ECR') {
+            steps {
+                script {
+                    sh '''
+                        aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
+                        docker push ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'RESULT: Build and tests completed successfully.'
+        }
+        failure {
+            echo 'RESULT: Build or tests failed.'
+        }
+    }
+}
