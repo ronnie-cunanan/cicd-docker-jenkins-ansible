@@ -2,8 +2,7 @@ pipeline {
     agent any
 
     environment {
-        AWS_REGION = 'ap-southeast-2'
-        AWS_ACCOUNT_ID = "962047682202"
+        AWS_REGION = 'ap-southeast-2'        
         ECR_REGISTRY = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
         ECR_REPOSITORY = 'my-docker-repo'
         IMAGE_NAME = 'flask-cd'
