@@ -125,6 +125,14 @@ The CD pipeline validates the `main` branch and publishes the image.
 
 A failed build or test should stop the pipeline before the image is pushed.
 
+### ✅ Jenkins Pipeline Success Results
+
+The screenshots below show successful Jenkins runs for both pipelines:
+
+| CI pipeline | CD pipeline |
+|---|---|
+| ![Successful Jenkins CI pipeline](images/ci-docker-jenkins-success.jpg) | ![Successful Jenkins CD pipeline](images/cd-docker-jenkins-success.jpg) |
+
 ## 🧰 Technology Stack
 
 - 🐙 **GitHub** — source control
@@ -147,6 +155,9 @@ A failed build or test should stop the pipeline before the image is pushed.
 ├── jenkins/
 │   ├── Jenkinsfile.ci          # Continuous Integration pipeline
 │   └── Jenkinsfile.cd          # Continuous Delivery pipeline
+├── images/
+│   ├── ci-docker-jenkins-success.jpg  # Successful CI pipeline result
+│   └── cd-docker-jenkins-success.jpg  # Successful CD pipeline result
 ├── deploy/                     # Deployment-related files, if configured
 ├── Dockerfile                  # Docker image instructions and default command
 ├── requirements.txt            # Python dependencies
